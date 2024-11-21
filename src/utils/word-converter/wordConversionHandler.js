@@ -62,14 +62,14 @@ export const WordConversionHandler = {
         unit: 'pt',
         format: 'a4'
       });
-
+  
       pdf.setFont('helvetica');
       pdf.setFontSize(12);
-
+  
       const pageWidth = pdf.internal.pageSize.getWidth();
       const margin = 40;
       const maxWidth = pageWidth - (margin * 2);
-
+  
       // Add document title
       pdf.setFontSize(16);
       pdf.text(file.name.replace(/\.(doc|docx|rtf|odt)$/i, ''), margin, margin);
@@ -77,36 +77,47 @@ export const WordConversionHandler = {
       pdf.setFontSize(12);
       const lines = pdf.splitTextToSize(file.content, maxWidth);
       let y = margin + 30;
-
+  
+      // Track number of pages
+      let pageCount = 1;
+  
       for (let i = 0; i < lines.length; i++) {
         if (y > pdf.internal.pageSize.getHeight() - margin) {
           pdf.addPage();
+          pageCount++;
           y = margin;
         }
         pdf.text(lines[i], margin, y);
         y += 15;
       }
-
+  
       // Create both blob URL and data URL
       const pdfBlob = pdf.output('blob');
       const blobUrl = URL.createObjectURL(pdfBlob);
       const dataUrl = pdf.output('dataurlstring');
-
+  
+      // Calculate file size
+      const fileSize = WordConversionHandler.formatFileSize(pdfBlob.size);
+  
       return {
         name: file.name.replace(/\.(doc|docx|rtf|odt)$/i, '.pdf'),
-        size: WordConversionHandler.formatFileSize(pdf.internal.fileSize),
-        pages: pdf.internal.getNumberOfPages(),
+        size: fileSize || '0 KB', // Provide fallback size
+        pages: pageCount || 1, // Provide fallback page count
         preview: dataUrl,
         url: blobUrl,
         blob: pdfBlob,
         content: file.content,
-        convertedFrom: file.name
+        convertedFrom: file.name,
+        metadata: {
+          pageCount: pageCount,
+          fileSize: fileSize,
+          fileName: file.name.replace(/\.(doc|docx|rtf|odt)$/i, '.pdf')
+        }
       };
     } catch (error) {
       throw new Error('Failed to convert file: ' + error.message);
     }
   },
-
   downloadPdf: async (file) => {
     try {
       // Create a blob URL if we don't have one
