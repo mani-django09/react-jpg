@@ -141,18 +141,36 @@ const PdfToWord = () => {
   
   const handlePrint = () => {
     if (!convertedFile) {
-      toast.error('Please convert a file first');
+      toast.error('No document to print');
       return;
     }
   
-    const loadingToast = toast.loading('Preparing to print...');
     try {
-      PdfConversionHandler.printPdf(convertedFile);
+      const printUrl = convertedFile.preview || convertedFile.url;
+      if (!printUrl) {
+        toast.error('Print preview not available');
+        return;
+      }
+  
+      // Create a print window
+      const printWindow = window.open(printUrl, '_blank');
+      
+      if (printWindow) {
+        printWindow.onload = () => {
+          try {
+            printWindow.print();
+          } catch (e) {
+            console.error('Print error:', e);
+            toast.error('Print failed. Please try printing manually from the opened window.');
+          }
+        };
+      } else {
+        // If popup was blocked, try direct print
+        PdfConversionHandler.printPdf(convertedFile);
+      }
     } catch (error) {
       console.error('Print error:', error);
-      toast.error('Unable to print. Try downloading and printing manually.');
-    } finally {
-      toast.dismiss(loadingToast);
+      toast.error('Failed to print. Please try downloading and printing manually.');
     }
   };
   

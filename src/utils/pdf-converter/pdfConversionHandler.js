@@ -131,73 +131,45 @@ export const PdfConversionHandler = {
         printBlob = await response.blob();
       }
 
-      const printUrl = URL.createObjectURL(printBlob);
-      const printWindow = window.open('', '_blank');
-      
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>Print ${file.name}</title>
-            <style>
-              body {
-                margin: 0;
-                padding: 0;
-                height: 100vh;
-                display: flex;
-                flex-direction: column;
-              }
-              .print-container {
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-              }
-              iframe {
-                flex: 1;
-                border: none;
-                width: 100%;
-                height: 100%;
-              }
-              @media print {
-                .no-print { display: none; }
-                body { height: auto; }
-                iframe { height: auto; }
-              }
-            </style>
-          </head>
-          <body>
-            <div class="no-print" style="padding: 10px; text-align: center;">
-              <button onclick="window.print()" style="padding: 8px 16px; cursor: pointer;">
-                Print Document
-              </button>
-            </div>
-            <div class="print-container">
-              <iframe src="${printUrl}#toolbar=0&view=FitH"></iframe>
-            </div>
-            <script>
-              document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') window.close();
-              });
-              window.onafterprint = () => {
-                setTimeout(() => window.close(), 100);
-              };
-            </script>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
+      if (!printBlob) {
+        throw new Error('No printable content available');
+      }
 
-      // Cleanup
-      setTimeout(() => {
-        URL.revokeObjectURL(printUrl);
-      }, 5000);
+      const printUrl = URL.createObjectURL(printBlob);
+      
+      // Create a hidden iframe for printing
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.src = printUrl;
+
+      // Add iframe to document
+      document.body.appendChild(iframe);
+
+      // Wait for iframe to load
+      iframe.onload = () => {
+        try {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+        } catch (printError) {
+          console.error('Print error:', printError);
+          toast.error('Failed to print. Please try downloading and printing manually.');
+        }
+
+        // Cleanup after print dialog closes
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+          URL.revokeObjectURL(printUrl);
+        }, 1000);
+      };
 
     } catch (error) {
-      console.error('Print error:', error);
-      toast.error('Failed to print document');
+      console.error('Print setup error:', error);
+      toast.error('Failed to prepare document for printing');
+      throw error;
     }
   },
-
   formatFileSize: (bytes) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
