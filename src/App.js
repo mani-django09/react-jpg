@@ -6,6 +6,7 @@ import JpgToPdf from './components/pdf-converter/JpgToPdf';
 import PdfToJpg from './components/pdf-converter/PdfToJpg';
 import WordToPdf from './components/word-to-pdf/WordToPdf';
 import PdfToWord from './components/pdf-to-word/PdfToWord';
+import CompressPdf from './components/compress-pdf/CompressPdf';
 
 function App() {
   return (
@@ -17,7 +18,7 @@ function App() {
           <Route path="/pdf-to-jpg" element={<PdfToJpg />} />
           <Route path="/word-to-pdf" element={<WordToPdf />} />
           <Route path="/pdf-to-word" element={<PdfToWord />} />
-
+          <Route path="/compress-pdf" element={<CompressPdf />} />
           {/* Add more routes as needed */}
         </Routes>
       </Layout>

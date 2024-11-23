@@ -121,7 +121,9 @@ const PdfToWord = () => {
   const [convertedFile, setConvertedFile] = useState(null);
   const [isConverting, setIsConverting] = useState(false);
   const [conversionProgress, setConversionProgress] = useState(0);
+  const [downloadProgress, setDownloadProgress] = useState(null);
 
+  
   const handleShare = async () => {
     if (!convertedFile) {
       toast.error('Please convert a file first');
